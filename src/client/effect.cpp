@@ -77,7 +77,7 @@ void Effect::onAppear()
         m_duration *= getAnimationPhases();
     }
 
-    startListenerPainter(ticksPerFrame);
+    schedulePainting(ticksPerFrame);
 
     // schedule removal
     const auto self = asEffect();

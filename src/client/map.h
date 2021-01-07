@@ -148,7 +148,8 @@ public:
     void removeMapView(const MapViewPtr& mapView);
     void notificateTileUpdate(const Position& pos, const ThingPtr& thing = nullptr, const Otc::Operation operation = Otc::OPERATION_NEUTRAL);
 
-    void requestDrawing(const Position& pos, const Otc::RequestDrawFlags reDrawFlags, const bool force = true);
+    void schedulePainting(const Otc::RequestDrawFlags reDrawFlags, uint16_t delay = Otc::MIN_TIME_TO_RENDER);
+    void cancelScheduledPainting(const Otc::RequestDrawFlags reDrawFlags, const uint16_t delay);
 
     bool loadOtcm(const std::string& fileName);
     void saveOtcm(const std::string& fileName);
@@ -224,7 +225,7 @@ public:
     std::vector<CreaturePtr> getSpectatorsInRange(const Position& centerPos, bool multiFloor, int xRange, int yRange);
     std::vector<CreaturePtr> getSpectatorsInRangeEx(const Position& centerPos, bool multiFloor, int minXRange, int maxXRange, int minYRange, int maxYRange);
 
-    void setLight(const Light& light) { m_light = light; requestDrawing(Position(), Otc::ReDrawLight); }
+    void setLight(const Light& light) { m_light = light; schedulePainting(Otc::ReDrawLight); }
     void setCentralPosition(const Position& centralPosition);
 
     bool isLookPossible(const Position& pos);

@@ -93,7 +93,7 @@ void MapView::draw(const Rect& rect)
 
     const Position cameraPosition = getCameraPosition();
 
-    const auto redrawThing = m_redrawFlag & Otc::ReDrawThing;
+    const auto redrawThing = m_frameCache.tile->canUpdate();
     const auto redrawLight = m_drawLights && m_redrawFlag & Otc::ReDrawLight;
 
     if(redrawThing || redrawLight) {
@@ -148,10 +148,6 @@ void MapView::draw(const Rect& rect)
         }
 
         m_frameCache.tile->release();
-
-        m_thingTimeRender.restart();
-
-        m_redrawFlag &= ~Otc::ReDrawThing;
     }
 
     // generating mipmaps each frame can be slow in older cards
@@ -819,7 +815,7 @@ void MapView::setDrawLights(bool enable)
     m_lightView = enable ? LightViewPtr(new LightView) : nullptr;
     m_drawLights = enable;
 
-    requestDrawing(Position(), Otc::RedrawAll, true);
+    schedulePainting(Otc::RedrawAll);
 }
 
 void MapView::initViewPortDirection()
@@ -891,33 +887,32 @@ bool MapView::canRenderTile(const TilePtr& tile, const ViewPort& viewPort, Light
     return true;
 }
 
-void MapView::requestDrawing(const Position& pos, const Otc::RequestDrawFlags reDrawFlags, const bool force)
+void MapView::schedulePainting(const Otc::RequestDrawFlags reDrawFlags, uint16_t delay)
 {
-    // Possible LocalPlayer
-    const bool isInCenter = pos == getCameraPosition();
-
-    if(!isInCenter && pos.isValid() && !isInRange(pos)) return;
-
-    const auto redrawSCI = reDrawFlags & Otc::ReDrawStaticCreatureInformation;
-    const auto redrawDCI = reDrawFlags & Otc::ReDrawDynamicCreatureInformation;
-
-    if((redrawSCI || redrawDCI) && (force || m_creatureInfTimeRender.ticksElapsed() >= Otc::MIN_TIME_TO_RENDER)) {
-        if(redrawSCI) {
-            m_redrawFlag |= Otc::ReDrawStaticCreatureInformation;
-        }
-
-        if(redrawDCI) {
-            m_redrawFlag |= Otc::ReDrawDynamicCreatureInformation;
-        }
+    if(reDrawFlags & Otc::ReDrawStaticText) {
+        m_frameCache.staticText->update();
+        return;
     }
 
-    if(reDrawFlags & Otc::ReDrawThing && (force || m_thingTimeRender.ticksElapsed() >= Otc::MIN_TIME_TO_RENDER)) {
-        m_redrawFlag |= Otc::ReDrawThing;
+    if(reDrawFlags & Otc::ReDrawThing) {
+        m_frameCache.tile->addRenderingTime(delay);
     }
 
-    if(isDrawingLights() && reDrawFlags & Otc::ReDrawLight) {
-        m_redrawFlag |= Otc::ReDrawLight;
-        m_lightView->requestDrawing(force);
+    if(reDrawFlags & Otc::ReDrawCreatureInformation || reDrawFlags & Otc::ReDrawDynamicCreatureInformation) {
+        m_frameCache.creatureInformation->addRenderingTime(delay);
+    }
+
+    /*if(m_drawLights && reDrawFlags & Otc::ReDrawLight) {
+        if(Otc::OPERATION_ADD)
+            m_lightView->addRenderingTime(delay);
+        else m_frameCache.tile->removeRenderingTime(delay);
+    }*/
+}
+
+void MapView::cancelScheduledPainting(const Otc::RequestDrawFlags reDrawFlags, uint16_t delay)
+{
+    if(reDrawFlags & Otc::ReDrawThing) {
+        m_frameCache.tile->removeRenderingTime(delay);
     }
 }
 
@@ -960,7 +955,7 @@ void MapView::drawSeparately(const int floor, const ViewPort& viewPort, LightVie
 
         const Position& tilePos = tile->getPosition();
         tile->drawStart(this);
-        tile->drawGround(transformPositionTo2D(tilePos, cameraPosition), m_scaleFactor, m_redrawFlag, tile->isCovered() ? nullptr : lightView);
+        tile->drawGround(transformPositionTo2D(tilePos, cameraPosition), m_scaleFactor, m_redrawFlag, lightView);
         tile->drawEnd(this);
     }
 
@@ -974,12 +969,11 @@ void MapView::drawSeparately(const int floor, const ViewPort& viewPort, LightVie
         const Position& tilePos = tile->getPosition();
 
         const Point pos2d = transformPositionTo2D(tilePos, cameraPosition);
-        const auto& drawLight = tile->isCovered() ? nullptr : lightView;
 
         if(!tile->hasGroundToDraw()) tile->drawStart(this);
 
-        tile->drawBottom(pos2d, m_scaleFactor, m_redrawFlag, drawLight);
-        tile->drawTop(pos2d, m_scaleFactor, m_redrawFlag, drawLight);
+        tile->drawBottom(pos2d, m_scaleFactor, m_redrawFlag, lightView);
+        tile->drawTop(pos2d, m_scaleFactor, m_redrawFlag, lightView);
 
         if(!tile->hasGroundToDraw()) tile->drawEnd(this);
     }

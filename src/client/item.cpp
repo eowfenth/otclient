@@ -407,12 +407,12 @@ int Item::getExactSize(int layer, int xPattern, int yPattern, int zPattern, int 
     return Thing::getExactSize(layer, xPattern, yPattern, zPattern, animationPhase);
 }
 
-void Item::startListenerPainter()
+int Item::getAnimationInterval()
 {
-    if(!hasAnimationPhases()) return;
+    if(!hasAnimationPhases()) return 0;
 
     const AnimatorPtr& animator = getAnimator();
-    Thing::startListenerPainter(animator ? animator->getAverageDuration() : Otc::ITEM_TICKS_PER_FRAME);
+    return animator ? animator->getAverageDuration() : Otc::ITEM_TICKS_PER_FRAME;
 }
 
 const ThingTypePtr& Item::getThingType()

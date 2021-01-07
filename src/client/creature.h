@@ -122,6 +122,7 @@ public:
     virtual void walk(const Position& oldPos, const Position& newPos);
     virtual void stopWalk();
 
+    int getAnimationInterval() override;
     bool isWalking() { return m_walking; }
     bool isRemoved() { return m_removed; }
     bool isInvisible() { return m_outfit.getCategory() == ThingCategoryEffect && m_outfit.getAuxId() == 13; }
@@ -225,8 +226,6 @@ private:
 
         int getDuration(Otc::Direction dir) { return Position::isDiagonal(dir) ? diagonalDuration : duration; }
     };
-
-    void checkAndStartAnimation();
 
     StepCache m_stepCache;
 };

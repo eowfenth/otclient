@@ -408,7 +408,7 @@ void Creature::updateJump()
 
     m_jumpOffset = PointF(height, height);
 
-    requestDrawing();
+    schedulePainting();
 
     int diff = 0;
     if(m_jumpTimer.ticksElapsed() < halfJumpDuration)
@@ -447,7 +447,7 @@ void Creature::onAppear()
         m_disappearEvent = nullptr;
     }
 
-    checkAndStartAnimation();
+    g_map.schedulePainting(Otc::ReDrawThing, getAnimationInterval());
 
     // creature appeared the first time or wasn't seen for a long time
     if(m_removed) {
@@ -579,7 +579,7 @@ void Creature::nextWalkUpdate()
 
     // do the update
     updateWalk();
-    requestDrawing();
+    schedulePainting();
 
     if(!m_walking) return;
 
@@ -644,7 +644,7 @@ void Creature::terminateWalk()
         self->m_walkAnimationPhase = 0;
         self->m_walkFinishAnimEvent = nullptr;
 
-        self->requestDrawing();
+        self->schedulePainting();
     }, g_game.getServerBeat());
 
 }
@@ -678,7 +678,7 @@ void Creature::setHealthPercent(uint8 healthPercent)
         onDeath();
 
     m_updateDynamicInformation = true;
-    g_map.requestDrawing(m_position, Otc::ReDrawDynamicCreatureInformation);
+    g_map.schedulePainting(Otc::ReDrawDynamicCreatureInformation);
 }
 
 void Creature::setDirection(Otc::Direction direction)
@@ -690,7 +690,7 @@ void Creature::setDirection(Otc::Direction direction)
 void Creature::setOutfit(const Outfit& outfit)
 {
     if(m_type != Proto::CreatureTypeUnknown) {
-        cancelListenerPainter();
+        cancelScheduledPainting();
     }
 
     const Outfit oldOutfit = m_outfit;
@@ -712,8 +712,8 @@ void Creature::setOutfit(const Outfit& outfit)
     callLuaField("onOutfitChange", m_outfit, oldOutfit);
 
     if(m_type != Proto::CreatureTypeUnknown) {
-        g_map.requestDrawing(m_position, Otc::ReDrawThing);
-        checkAndStartAnimation();
+        g_map.schedulePainting(Otc::ReDrawThing);
+        g_map.schedulePainting(Otc::ReDrawThing, getAnimationInterval());
     }
 }
 
@@ -786,7 +786,7 @@ void Creature::setSkull(uint8 skull)
     m_skull = skull;
     callLuaField("onSkullChange", m_skull);
 
-    g_map.requestDrawing(m_position, Otc::ReDrawStaticCreatureInformation);
+    g_map.schedulePainting(Otc::ReDrawStaticCreatureInformation);
 }
 
 void Creature::setShield(uint8 shield)
@@ -794,7 +794,7 @@ void Creature::setShield(uint8 shield)
     m_shield = shield;
     callLuaField("onShieldChange", m_shield);
 
-    g_map.requestDrawing(m_position, Otc::ReDrawStaticCreatureInformation);
+    g_map.schedulePainting(Otc::ReDrawStaticCreatureInformation);
 }
 
 void Creature::setEmblem(uint8 emblem)
@@ -874,7 +874,7 @@ void Creature::updateShield()
     } else if(!m_shieldBlink)
         m_showShieldTexture = true;
 
-    g_map.requestDrawing(m_position, Otc::ReDrawStaticCreatureInformation);
+    g_map.schedulePainting(Otc::ReDrawStaticCreatureInformation);
 }
 
 Point Creature::getDrawOffset()
@@ -1012,13 +1012,15 @@ int Creature::getCurrentAnimationPhase(const bool mount)
     return m_walkAnimationPhase;
 }
 
-void Creature::checkAndStartAnimation()
+int Creature::getAnimationInterval()
 {
     const auto& datType = m_outfit.hasMount() ? rawGetMountThingType() : rawGetThingType();
 
     const auto idleAnimator = datType->getIdleAnimator();
-    if(idleAnimator) startListenerPainter(idleAnimator->getAverageDuration());
-    else if(datType->isAnimateAlways()) startListenerPainter(1000 / datType->getAnimationPhases());
+    if(idleAnimator) return idleAnimator->getAverageDuration();
+    if(datType->isAnimateAlways()) return 1000 / datType->getAnimationPhases();
+
+    return 0;
 }
 
 int Creature::getExactSize(int layer, int xPattern, int yPattern, int zPattern, int animationPhase)

@@ -51,7 +51,8 @@ namespace Otc
         MAX_AUTOWALK_STEPS_RETRY = 10,
         MAX_AUTOWALK_DIST = 127,
 
-        MIN_TIME_TO_RENDER = 16
+        MIN_TIME_TO_RENDER = 16,
+        MAX_TIME_TO_RENDER = 50
     };
 
     enum RequestDrawFlags {

@@ -149,7 +149,7 @@ void Tile::drawBottom(const Point& dest, float scaleFactor, int reDrawFlags, Lig
         const auto& creature = *it;
         if(creature->isWalking()) continue;
         drawThing(creature, dest - m_drawElevation * scaleFactor, scaleFactor, true, reDrawFlags, lightView);
-}
+    }
 #else
     for(const auto& creature : m_creatures) {
         if(creature->isWalking()) continue;
@@ -192,7 +192,7 @@ void Tile::clean()
     m_creatures.clear();
     m_things.clear();
 
-    cancelListenerPainter();
+    cancelScheduledPainting();
 }
 
 void Tile::addWalkingCreature(const CreaturePtr& creature)
@@ -719,12 +719,12 @@ void Tile::checkTranslucentLight()
     tile->m_flags &= ~TILESTATE_TRANSLUECENT_LIGHT;
 }
 
-void Tile::cancelListenerPainter()
+void Tile::cancelScheduledPainting()
 {
     if(m_animatedItems.empty()) return;
 
     for(const ItemPtr& item : m_animatedItems)
-        item->cancelListenerPainter();
+        item->cancelScheduledPainting();
 
     m_animatedItems.clear();
 }
@@ -878,7 +878,7 @@ void Tile::select()
 
     m_highlight.listeningEvent = g_dispatcher.cycleEvent([=]() {
         m_highlight.update = true;
-        g_map.requestDrawing(m_position, Otc::ReDrawThing, false);
+        g_map.schedulePainting(Otc::ReDrawThing);
     }, 30);
 }
 
@@ -890,5 +890,5 @@ void Tile::unselect()
     m_highlight.listeningEvent->cancel();
     m_highlight.listeningEvent = nullptr;
 
-    g_map.requestDrawing(m_position, Otc::ReDrawThing, false);
+    g_map.schedulePainting(Otc::ReDrawThing);
 }

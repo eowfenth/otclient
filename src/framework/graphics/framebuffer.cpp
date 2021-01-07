@@ -24,6 +24,7 @@
 #include "graphics.h"
 #include "texture.h"
 
+#include <framework/core/eventdispatcher.h>
 #include <framework/platform/platformwindow.h>
 #include <framework/core/application.h>
 
@@ -37,6 +38,7 @@ FrameBuffer::FrameBuffer()
 void FrameBuffer::internalCreate()
 {
     m_prevBoundFbo = 0;
+    m_requestAmount = 0;
     m_fbo = 0;
     if(g_graphics.canUseFBO()) {
         glGenFramebuffers(1, &m_fbo);
@@ -92,11 +94,12 @@ void FrameBuffer::release()
 {
     internalRelease();
     g_painter->restoreSavedState();
+    m_requestAmount = 0;
 }
 
 void FrameBuffer::draw()
 {
-    Rect rect(0,0, getSize());
+    Rect rect(0, 0, getSize());
     g_painter->drawTexturedRect(rect, m_texture, rect);
 }
 
@@ -107,7 +110,7 @@ void FrameBuffer::draw(const Rect& dest, const Rect& src)
 
 void FrameBuffer::draw(const Rect& dest)
 {
-    g_painter->drawTexturedRect(dest, m_texture, Rect(0,0, getSize()));
+    g_painter->drawTexturedRect(dest, m_texture, Rect(0, 0, getSize()));
 }
 
 void FrameBuffer::internalBind()
@@ -153,4 +156,47 @@ Size FrameBuffer::getSize()
                     std::min<int>(m_texture->getHeight(), g_window.getHeight()));
     }
     return m_texture->getSize();
+}
+
+const bool FrameBuffer::canUpdate()
+{
+    return m_lastRenderedTime >= std::time(0);
+}
+
+void FrameBuffer::update()
+{
+    ++m_requestAmount;
+    if(m_lastRenderedTime > std::time(0)) return;
+    m_lastRenderedTime = std::time(0) + getRenderTime();
+}
+
+void FrameBuffer::addRenderingTime(const uint16_t time)
+{
+    if(time == 0) return;
+
+    if(time <= Otc::MIN_TIME_TO_RENDER) {
+        update();
+        return;
+    }
+
+    auto& schedule = m_schedules[time];
+    if(schedule.first == 0) {
+        schedule.second = g_dispatcher.cycleEvent([=]() {
+            update();
+        }, time);
+    }
+
+    ++schedule.first;
+}
+
+void FrameBuffer::removeRenderingTime(const uint16_t time)
+{
+    auto& schedule = m_schedules[time];
+    if(schedule.first == 0) return;
+
+    --schedule.first;
+    if(schedule.first == 0 && schedule.second) {
+        schedule.second->cancel();
+        schedule.second = nullptr;
+    }
 }

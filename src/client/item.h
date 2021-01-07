@@ -132,6 +132,7 @@ public:
     ItemPtr clone();
     ItemPtr asItem() { return static_self_cast<Item>(); }
     bool isItem() override { return true; }
+    int getAnimationInterval() override;
 
     ItemVector getContainerItems() { return m_containerItems; }
     ItemPtr getContainerItem(int slot) { return m_containerItems[slot]; }
@@ -149,8 +150,6 @@ public:
 
     void canDraw(bool canDraw) { m_canDraw = canDraw; }
     bool canDraw()  const { return m_canDraw; }
-
-    void startListenerPainter();
 
 private:
     uint16 m_clientId;

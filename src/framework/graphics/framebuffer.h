@@ -25,6 +25,9 @@
 
 #include "declarations.h"
 #include "texture.h"
+#include <framework/core/scheduledevent.h>
+
+#include <client/const.h>
 
 class FrameBuffer : public stdext::shared_object
 {
@@ -51,10 +54,17 @@ public:
     bool isBackuping() { return m_backuping; }
     bool isSmooth() { return m_smooth; }
 
+    const bool canUpdate();
+    void update();
+    void addRenderingTime(const uint16_t time);
+    void removeRenderingTime(const uint16_t time);
+
 private:
     void internalCreate();
     void internalBind();
     void internalRelease();
+
+    const uint32_t getRenderTime() { return m_requestAmount < 20 ? Otc::MIN_TIME_TO_RENDER : Otc::MAX_TIME_TO_RENDER; }
 
     TexturePtr m_texture;
     TexturePtr m_screenBackup;
@@ -65,6 +75,10 @@ private:
     stdext::boolean<true> m_smooth;
 
     static uint boundFbo;
+
+    std::unordered_map<uint16_t, std::pair<uint16_t, ScheduledEventPtr>> m_schedules;
+    ticks_t m_lastRenderedTime;
+    uint32_t m_requestAmount;
 };
 
 #endif

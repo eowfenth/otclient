@@ -146,7 +146,7 @@ public:
     bool hasBottomToDraw() const { return !m_bottomItems.empty() || !m_commonItems.empty() || !m_creatures.empty() || !m_walkingCreatures.empty(); }
     bool hasTopToDraw() const { return !m_topItems.empty() || !m_effects.empty(); }
 
-    void cancelListenerPainter();
+    void cancelScheduledPainting();
 
     const bool hasBorderShadowColor() { return m_borderShadowColor != Color::white; }
 

@@ -667,38 +667,3 @@ int ThingType::getExactHeight()
 
     return m_exactHeight = size.height();
 }
-
-void ThingType::startListenerPainter(const float duration)
-{
-    if(!hasListenerPainter()) {
-        m_painterListeningEvent = g_dispatcher.cycleEvent([=]() {
-            uint32_t redrawFlag = Otc::ReDrawThing;
-
-            if(getCategory() == ThingCategoryMissile && hasLight())
-                redrawFlag |= Otc::ReDrawLight;
-
-            g_map.requestDrawing(Position(), static_cast<Otc::RequestDrawFlags>(redrawFlag), false);
-        }, duration);
-    }
-
-    ++m_countPainterListeningRef;
-}
-
-bool ThingType::cancelListenerPainter()
-{
-    if(!hasListenerPainter()) return false;
-
-    --m_countPainterListeningRef;
-
-    if(m_painterListeningEvent && m_countPainterListeningRef == 0) {
-        uint32_t redrawFlag = Otc::ReDrawThing;
-        if(hasLight()) redrawFlag |= Otc::ReDrawLight;
-
-        g_map.requestDrawing(Position(), static_cast<Otc::RequestDrawFlags>(redrawFlag));
-
-        m_painterListeningEvent->cancel();
-        m_painterListeningEvent = nullptr;
-    }
-
-    return true;
-}

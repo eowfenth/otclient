@@ -31,8 +31,7 @@
 
 Thing::Thing() : m_datId(0), m_useBlankTexture(false) {}
 
-
-void Thing::requestDrawing(const bool force)
+void Thing::schedulePainting(uint16_t delay)
 {
     uint32_t redrawFlag;
 
@@ -40,13 +39,27 @@ void Thing::requestDrawing(const bool force)
     else {
         redrawFlag = Otc::ReDrawThing;
 
-        if(isItem()) static_self_cast<Item>()->startListenerPainter();
-        else if(isCreature()) redrawFlag |= Otc::ReDrawAllInformation;
+        if(isItem()) {
+            g_map.schedulePainting(static_cast<Otc::RequestDrawFlags>(redrawFlag), getAnimationInterval());
+        } else if(isCreature()) redrawFlag |= Otc::ReDrawAllInformation;
 
         if(isLocalPlayer() || hasLight()) redrawFlag |= Otc::ReDrawLight;
     }
 
-    g_map.requestDrawing(m_position, static_cast<Otc::RequestDrawFlags>(redrawFlag), force || isLocalPlayer());
+    g_map.schedulePainting(static_cast<Otc::RequestDrawFlags>(redrawFlag), delay);
+}
+
+void Thing::cancelScheduledPainting()
+{
+    const int delay = getAnimationInterval();
+    if(delay == 0) return;
+
+    uint32_t redrawFlag = Otc::ReDrawThing;
+
+    if(isLocalPlayer() || hasLight()) redrawFlag |= Otc::ReDrawLight;
+    if(isCreature()) redrawFlag |= Otc::ReDrawAllInformation;
+
+    g_map.cancelScheduledPainting(static_cast<Otc::RequestDrawFlags>(redrawFlag), delay);
 }
 
 void Thing::setPosition(const Position& position)
