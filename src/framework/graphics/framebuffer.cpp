@@ -94,7 +94,12 @@ void FrameBuffer::release()
 {
     internalRelease();
     g_painter->restoreSavedState();
+    if(m_requestAmount > 0)
+        g_logger.info(std::to_string(m_requestAmount));
+
+    m_force = false;
     m_requestAmount = 0;
+    m_lastRenderedTime.restart();
 }
 
 void FrameBuffer::draw()
@@ -160,19 +165,22 @@ Size FrameBuffer::getSize()
 
 const bool FrameBuffer::canUpdate()
 {
-    return m_lastRenderedTime >= std::time(0);
+    return m_force || m_lastRenderedTime.ticksElapsed() >= getRenderTime();
 }
 
 void FrameBuffer::update()
 {
     ++m_requestAmount;
-    if(m_lastRenderedTime > std::time(0)) return;
-    m_lastRenderedTime = std::time(0) + getRenderTime();
 }
 
 void FrameBuffer::addRenderingTime(const uint16_t time)
 {
     if(time == 0) return;
+
+    if(time == 1) {
+        m_force = true;
+        return;
+    }
 
     if(time <= Otc::MIN_TIME_TO_RENDER) {
         update();

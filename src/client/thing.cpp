@@ -41,7 +41,10 @@ void Thing::schedulePainting(uint16_t delay)
 
         if(isItem()) {
             g_map.schedulePainting(static_cast<Otc::RequestDrawFlags>(redrawFlag), getAnimationInterval());
-        } else if(isCreature()) redrawFlag |= Otc::ReDrawAllInformation;
+        } else if(isCreature()) {
+            if(isLocalPlayer()) delay = 1;
+            redrawFlag |= Otc::ReDrawCreatureInformation;
+        }
 
         if(isLocalPlayer() || hasLight()) redrawFlag |= Otc::ReDrawLight;
     }

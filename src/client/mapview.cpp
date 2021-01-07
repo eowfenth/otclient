@@ -887,7 +887,7 @@ bool MapView::canRenderTile(const TilePtr& tile, const ViewPort& viewPort, Light
     return true;
 }
 
-void MapView::schedulePainting(const Otc::RequestDrawFlags reDrawFlags, uint16_t delay)
+void MapView::schedulePainting(const Otc::RequestDrawFlags reDrawFlags, const uint16_t delay)
 {
     if(reDrawFlags & Otc::ReDrawStaticText) {
         m_frameCache.staticText->update();

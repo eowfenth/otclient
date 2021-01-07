@@ -87,7 +87,7 @@ void Map::cancelScheduledPainting(const Otc::RequestDrawFlags reDrawFlags, const
         mapView->cancelScheduledPainting(reDrawFlags, delay);
 }
 
-void Map::schedulePainting(const Otc::RequestDrawFlags reDrawFlags, uint16_t delay)
+void Map::schedulePainting(const Otc::RequestDrawFlags reDrawFlags, const uint16_t delay)
 {
     for(const MapViewPtr& mapView : m_mapViews)
         mapView->schedulePainting(reDrawFlags, delay);

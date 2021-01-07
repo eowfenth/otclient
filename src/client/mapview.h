@@ -129,7 +129,7 @@ public:
 
     MapViewPtr asMapView() { return static_self_cast<MapView>(); }
 
-    void schedulePainting(const Otc::RequestDrawFlags reDrawFlags, uint16_t delay = Otc::MIN_TIME_TO_RENDER);
+    void schedulePainting(const Otc::RequestDrawFlags reDrawFlags, const uint16_t delay = Otc::MIN_TIME_TO_RENDER);
     void cancelScheduledPainting(const Otc::RequestDrawFlags reDrawFlags, uint16_t delay);
 
     void resetLastCamera() { m_lastCameraPosition = Position(); }

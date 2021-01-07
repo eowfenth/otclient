@@ -148,7 +148,7 @@ public:
     void removeMapView(const MapViewPtr& mapView);
     void notificateTileUpdate(const Position& pos, const ThingPtr& thing = nullptr, const Otc::Operation operation = Otc::OPERATION_NEUTRAL);
 
-    void schedulePainting(const Otc::RequestDrawFlags reDrawFlags, uint16_t delay = Otc::MIN_TIME_TO_RENDER);
+    void schedulePainting(const Otc::RequestDrawFlags reDrawFlags, const uint16_t delay = Otc::MIN_TIME_TO_RENDER);
     void cancelScheduledPainting(const Otc::RequestDrawFlags reDrawFlags, const uint16_t delay);
 
     bool loadOtcm(const std::string& fileName);

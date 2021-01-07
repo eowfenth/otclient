@@ -26,7 +26,7 @@
 #include "declarations.h"
 #include "texture.h"
 #include <framework/core/scheduledevent.h>
-
+#include <framework/core/timer.h>
 #include <client/const.h>
 
 class FrameBuffer : public stdext::shared_object
@@ -64,7 +64,12 @@ private:
     void internalBind();
     void internalRelease();
 
-    const uint32_t getRenderTime() { return m_requestAmount < 20 ? Otc::MIN_TIME_TO_RENDER : Otc::MAX_TIME_TO_RENDER; }
+    const uint32_t getRenderTime()
+    {
+        return m_requestAmount < 50 ? Otc::MIN_TIME_TO_RENDER :
+            m_requestAmount < 100 ? Otc::MED_TIME_TO_RENDER :
+            Otc::MAX_TIME_TO_RENDER;
+    }
 
     TexturePtr m_texture;
     TexturePtr m_screenBackup;
@@ -77,8 +82,9 @@ private:
     static uint boundFbo;
 
     std::unordered_map<uint16_t, std::pair<uint16_t, ScheduledEventPtr>> m_schedules;
-    ticks_t m_lastRenderedTime;
+    Timer m_lastRenderedTime;
     uint32_t m_requestAmount;
+    stdext::boolean<false> m_force;
 };
 
 #endif
