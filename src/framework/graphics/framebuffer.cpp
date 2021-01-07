@@ -94,8 +94,6 @@ void FrameBuffer::release()
 {
     internalRelease();
     g_painter->restoreSavedState();
-    if(m_requestAmount > 0)
-        g_logger.info(std::to_string(m_requestAmount));
 
     m_force = false;
     m_requestAmount = 0;
